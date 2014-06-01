@@ -8,6 +8,14 @@ public class WordLibrary {
 	private int LastWordNumber;
 	private String LibraryName;
 	
+	public String getLibraryName() {
+		return LibraryName;
+	}
+	
+	public SingleWord getLastWordNumber()
+	{
+		return wordlist.get(LastWordNumber);
+	}
 	
 	
 }
