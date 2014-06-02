@@ -2,7 +2,9 @@ package model;
 
 import java.util.ArrayList;
 
-public class WordLibrary {
+import controller.CompactStat;
+
+public class WordLibrary implements CompactStat{
 
 	private ArrayList<SingleWord> wordlist;
 	private int LastWordNumber;
@@ -16,6 +18,20 @@ public class WordLibrary {
 	{
 		return wordlist.get(LastWordNumber);
 	}
-	
-	
+
+	public int calcCorrectWordNumber() {
+
+		return 0;
+	}
+
+	public int calcWrongWordNumber() {
+
+		return 0;
+	}
+
+	public double calcCorrectRate() {
+
+		return 0;
+	}
+
 }
