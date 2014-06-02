@@ -9,5 +9,4 @@ public class RemberProcess {
 	private ArrayList<WordLibrary> libraryList;
 	private WordLibrary selectedLibrary;
 	
-	
 }
