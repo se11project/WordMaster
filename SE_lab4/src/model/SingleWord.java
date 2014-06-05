@@ -18,4 +18,23 @@ public class SingleWord {
 		return status;
 	}
 	
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public void setChinese(String chinese) {
+		this.chinese = chinese;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public void updateStatus(String str) {
+		if (content.compareTo(str) == 0)
+			this.status = 3;
+		else
+			this.status = 1;
+	}
+	
 }
