@@ -64,9 +64,7 @@ public class BarCharts extends JFrame {
 	public static CategoryDataset createDataset() {
 
 		String[] rowKeys = { "单词总数", "已背数量", "正确数量" };// 行标志
-		String[] columnKeys = { "ALL", "A", "B", "C", "D", "E", "F", "G", "H",
-				"I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
-				"U", "V", "W", "X", "Y", "Z" };// 列标志
+		String[] columnKeys = { "n.", "v.", "adj.", "adv.", "pron.", "num.", "int.", "prep.", "conj.", "aux." };// 列标志
 		CategoryDataset linedataset = DatasetUtilities.createCategoryDataset(
 				rowKeys, columnKeys, data); // 建立数据集
 

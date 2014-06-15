@@ -1,19 +1,22 @@
 package model;
 
 public class SingleWord {
-
-	private String content;
+	private String english;
 	private String chinese;
-	private int status = 0;
+	private int status;
+	/*
+	 * status为一个十二位二进制数，转化成十进制数范围在0到4095。最高十位从高到低依次表示是否为相应词库的最后一个单词，右边第一位表示是否背过，
+	 * 右边第二位表示是否背对。
+	 */
 
-	public SingleWord(String content, String chinese, int status) {
-		this.content = content;
+	public SingleWord(String english, String chinese, int status) {
+		this.english = english;
 		this.chinese = chinese;
 		this.status = status;
 	}
 
-	public String getContent() {
-		return content;
+	public String getEnglish() {
+		return english;
 	}
 
 	public String getChinese() {
@@ -24,29 +27,28 @@ public class SingleWord {
 		return status;
 	}
 
-	public void setContent(String content) {
-		this.content = content;
-	}
-
-	public void setChinese(String chinese) {
-		this.chinese = chinese;
-	}
-
 	public void setStatus(int status) {
 		this.status = status;
 	}
 
-	public boolean updateStatus(String str) {
-		if (content.compareTo(str) == 0) {
-			this.status = 3;
-			System.out.println(content + " 0p0");
+	/* 更新背诵的单词的状态 */
+	public boolean updateStatus(String str, WordLibrary selectedLibrary) {
+		int libraryIndex = selectedLibrary.getLibraryIndex();
+		int changeStatus = 1 << (11 - libraryIndex);
+		this.status |= changeStatus;
+		if (english.equals(str)) {
+			this.status |= 0x3;
 			return true;
 		} else {
-			if (this.status != 3)
-				this.status = 1;
-			System.out.println(content + " 0p0");
+			this.status |= 0x1;
 			return false;
 		}
 	}
 
+	/* 更新前一个单词的背诵的状态为非该词库最后一个单词 */
+	public void updateStatus(WordLibrary selectedLibrary) {
+		int libraryIndex = selectedLibrary.getLibraryIndex();
+		int changeStatus = ~(1 << (11 - libraryIndex));
+		this.status &= changeStatus;
+	}
 }

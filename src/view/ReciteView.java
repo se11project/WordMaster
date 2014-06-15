@@ -1,21 +1,19 @@
 package view;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import model.Output;
-import model.BigLibrary;
+import model.InputOutputXml;
+import model.SingleWord;
+import model.WordLibrary;
 import controller.Controller;
 
 public class ReciteView extends JFrame {
@@ -44,29 +42,27 @@ public class ReciteView extends JFrame {
 	private JButton f2b3;
 	private JButton f2b4;
 
-	private BigLibrary rp;
+//	private BigLibrary rp;
 	private Controller controller;
 	private Label l2;
 	private Label l3;
 
 	private static boolean flag_b1 = false;
 	private int currentNum = 0;
-	private int current_lib = 0;
+//	private int current_lib = 0;
 
 	public ReciteView(Controller controller) {
 		this.controller = controller;
-		this.rp = controller.getProcess();
+//		this.rp = controller.getProcess();
 
-		final TimerPanel p22 = new TimerPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
-		p22.start();
 		num1 = 1;
-		num2 = rp.getRememberWordNumber();
-		rp.setCurrentCorrectNumber(0);
-		rp.setCurrentWrongNumber(0);
+		num2 = ReciteView.this.controller.getRememberWordNumber();
+		ReciteView.this.controller.setCurrentCorrectNumber(0);
+		ReciteView.this.controller.setCurrentWrongNumber(0);
 
-		int startNum = rp.getCurrentWordNumber();
-		s3 = rp.getSelectedLibrary().getWordlist().get(startNum).getChinese();
-		s5 = rp.getSelectedLibrary().getWordlist().get(startNum).getContent();
+		int startNum = controller.getCurrentWordNumber();
+		s3 = ReciteView.this.controller.getSelectedLibrary().getWordlist().get(startNum).getChinese();
+		s5 = ReciteView.this.controller.getSelectedLibrary().getWordlist().get(startNum).getEnglish();
 
 		frame = new JFrame("背单词");
 		frame.setSize(500, 500);
@@ -77,7 +73,7 @@ public class ReciteView extends JFrame {
 
 		JPanel p1 = new JPanel();
 		JPanel p21 = new JPanel();
-		JPanel p23 = new JPanel();
+		JPanel p22 = new JPanel();
 		JPanel p3 = new JPanel();
 
 		frame.add(p1, BorderLayout.NORTH);
@@ -87,7 +83,6 @@ public class ReciteView extends JFrame {
 		p1.setLayout(new GridLayout(3, 1));
 		p1.add(p21);
 		p1.add(p22);
-		p1.add(p23);
 
 		p21.setLayout(new GridLayout(1, 2));
 		Label l1 = new Label("开始背单词");
@@ -95,12 +90,12 @@ public class ReciteView extends JFrame {
 		p21.add(l1);
 		p21.add(l2);
 
-		p23.setLayout(new GridLayout(3, 2));
+		p22.setLayout(new GridLayout(3, 2));
 		l3 = new Label(s3);
 		l4 = new Label(s4);
 		b1 = new JButton("确认");
 		currentNum = startNum;
-		current_lib = rp.getLibrary();
+//		current_lib = ReciteView.this.controller.getLibrary();
 
 		System.out.println("str3 " + flag_b1);
 
@@ -109,57 +104,45 @@ public class ReciteView extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (!ReciteView.flag_b1) {
+					WordLibrary selectedLibrary = ReciteView.this.controller.getSelectedLibrary();
+					int selectedLibraryIndex = selectedLibrary.getLibraryIndex();
 					ReciteView.flag_b1 = true;
+					int libraryLength = selectedLibrary.getLibraryLength();
+					// 更新数据结构中前一个单词的状态为非本词库最后一个单词
+					int previousNum = (currentNum - 1 + libraryLength) % libraryLength;
+					SingleWord previousWord = selectedLibrary.getWordlist().get(previousNum);
+					int previousWordStatus = previousWord.getStatus();
+					previousWordStatus &= ~(1 << (11 - selectedLibraryIndex));
+					ReciteView.this.controller.getSelectedLibrary().getWordlist().get(previousNum).setStatus(previousWordStatus);
+					SingleWord currentWord = ReciteView.this.controller.getSelectedLibrary().getWordlist().get(currentNum);
+					int currentStatus = currentWord.getStatus();
+					// 判断所背单词是否正确，更新数据结构中该单词的状态，包括为本词库最后一个单词以及背对/背过
 					if (ReciteView.this.controller.rememberWord(test.getText())) {
 						l4.setText("恭喜你！回答正确。");
 
 						System.out.println("str2 " + flag_b1);
-
-						BigLibrary.getSelectedLibrary().getWordlist()
-								.get(currentNum).setStatus(3);
-						BigLibrary.librarylist[current_lib] = (currentNum + 1)
-								% BigLibrary.getSelectedLibrary()
-										.getLibraryLength();
-
-						try {
-							(new Output()).print_list(BigLibrary.librarylist,
-									"libraries.txt", 26);
-
-							(new Output()).print_list(BigLibrary.libraryList,
-									"statistics.txt");
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-					}
-
-					else {
-						l4.setText("很遗憾！你答错了。");
+						
+						currentStatus |= (1 << (11 - selectedLibraryIndex));
+						currentStatus |= 0x3;
+						ReciteView.this.controller.getSelectedLibrary().getWordlist()
+								.get(currentNum).setStatus(currentStatus);
+					} else {
+						l4.setText("很遗憾！你答错了。正确答案：" + currentWord.getEnglish());
 
 						if (!ReciteView.flag_b1) {
 							ReciteView.flag_b1 = true;
-							num4++;
 
-							if (BigLibrary.getSelectedLibrary().getWordlist()
-									.get(currentNum).getStatus() != 3)
-								BigLibrary.getSelectedLibrary().getWordlist()
-										.get(currentNum).setStatus(1);
-							BigLibrary.librarylist[current_lib] = (currentNum + 1)
-									% BigLibrary.getSelectedLibrary()
-											.getLibraryLength();
-
-							try {
-								(new Output()).print_list(
-										BigLibrary.librarylist,
-										"libraries.txt", 26);
-
-								(new Output()).print_list(
-										BigLibrary.libraryList,
-										"statistics.txt");
-							} catch (Exception e1) {
-								e1.printStackTrace();
-							}
+							currentStatus |= (1 << (11 - selectedLibraryIndex));
+							currentStatus |= 0x1;
+							ReciteView.this.controller.getSelectedLibrary().getWordlist()
+									.get(currentNum).setStatus(currentStatus);
 						}
 					}
+					int nextNum = (currentNum + 1) % libraryLength;
+					ReciteView.this.controller.getProcess().setCurrentWordNumber(nextNum);
+					// 将两个单词的状态输出到文件
+					InputOutputXml.outputXml(previousWord, "statistics.xml");
+					InputOutputXml.outputXml(currentWord, "statistics.xml");
 				}
 			}
 		});
@@ -172,26 +155,21 @@ public class ReciteView extends JFrame {
 				if (ReciteView.flag_b1) {
 					if (num1 == num2) {
 						updateContent();
-						p22.stop();
-						JOptionPane.showMessageDialog(null, "本次单词背诵结束。\n你的用时是：" + p22.getTime() / 60 + "分" + p22.getTime() % 60 + "秒。");
 						frame.dispose();
 						haveFinished();
-					} else {
-						ReciteView.this.controller.next();
+					} else
 						updateContent();
-					}
 					ReciteView.flag_b1 = false;
 				}
 			}
-
 		});
 
-		p23.add(l3);
-		p23.add(test);
-		p23.add(b1);
-		p23.add(b2);
+		p22.add(l3);
+		p22.add(test);
+		p22.add(b1);
+		p22.add(b2);
 		
-		p23.add(l4);
+		p22.add(l4);
 
 		p3.setLayout(new GridLayout(1, 2));
 
@@ -225,29 +203,16 @@ public class ReciteView extends JFrame {
 	private void updateContent() {
 		if (num1 < num2)
 			num1++;
-		int startNum = rp.getCurrentWordNumber();
+		int startNum = ReciteView.this.controller.getCurrentWordNumber();
 		l2.setText(num1 + "/" + num2);
-		s3 = rp.getSelectedLibrary().getWordlist().get(startNum).getChinese();
+		s3 = ReciteView.this.controller.getSelectedLibrary().getWordlist().get(startNum).getChinese();
 		l3.setText(s3);
 		l4.setText("提示信息");
 
-		BigLibrary.librarylist[current_lib] = startNum;
+//		ReciteView.this.controller.librarylist[current_lib] = startNum;
 
-		s5 = rp.getSelectedLibrary().getWordlist().get(startNum).getContent();
-		currentNum = BigLibrary.findWordIndex(s5, BigLibrary.WORD_NUM);
-
-		try {
-			(new Output()).print_list(BigLibrary.librarylist, "libraries.txt",
-					26);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-
-		try {
-			(new Output()).print_list(BigLibrary.libraryList, "statistics.txt");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		s5 = ReciteView.this.controller.getSelectedLibrary().getWordlist().get(startNum).getEnglish();
+		currentNum = ReciteView.this.controller.findWordIndex(s5);
 
 		test.setText("");
 		frame.validate();

@@ -1,60 +1,146 @@
 package model;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
+import java.util.HashSet;
 
 import javax.swing.JOptionPane;
 
 public class BigLibrary {
 
 	public static final int WORD_NUM = 7989;
+	private static final int POS_NUM = 10;
 
 	private int rememberWordNumber = 1;
-	private static int currentWordNumber;
-	public static WordLibrary[] libraryList = new WordLibrary[26];
-	private static WordLibrary selectedLibrary;
+	private int currentWordNumber = 0;
+	public WordLibrary[] libraryList = new WordLibrary[POS_NUM];
+	private WordLibrary selectedLibrary;
 	private int currentReciteNumber = 0;
 	private int currentCorrectNumber = 0;
 	private int currentWrongNumber = 0;
 
-	public static ArrayList<SingleWord>[] wordList = new ArrayList[26];
-	public static int[] librarylist = new int[26];
+	public int[] librarylist = new int[POS_NUM];
 
-	public static void fillWordList() throws IOException {
-		wordList = (new Output()).get_word_list();
+	private static final String[] POS_CHINESE = new String[] { "名词", "动词", "形容词", "副词", "代词", "数量词", "感叹词", "介词", "连词", "助动词" };
+	private static final String[] POS_ABBR = new String[] { "n.", "v.", "adj.", "adv.", "pron.", "num.", "int.", "prep.", "conj.", "aux." };
+	private ArrayList<String> pos = new ArrayList<String>();
+	@SuppressWarnings("unchecked")
+	private ArrayList<SingleWord>[] wordList = new ArrayList[POS_NUM];
+
+	public BigLibrary() {
+		for (int i = 0; i < POS_NUM; i++)
+			pos.add(POS_ABBR[i]);
+		/*
+		 * 名词n. (nn.) 动词v. 形容词adj. 副词adv. (ad.) 代词pron. 数量词num. 感叹词int. 介词prep.
+		 * 连词conj. 助动词aux.
+		 */
+		for (int i = 0; i < POS_NUM; i++)
+			wordList[i] = new ArrayList<SingleWord>();
 	}
 
-	public static void fillLibraryList() throws IOException {
-		librarylist = Output.get_array("libraries.txt", 26);
-		System.out.println(selectedLibrary.getLibraryName());
-		currentWordNumber = librarylist[selectedLibrary.getLibraryName()
-				.charAt(0) - 'A'];
-		System.out.println("currentWordNumber: " + currentWordNumber);//
-	}
-
-	public static int findWordIndex(String word, int size) {
-		int libraryIndex = word.charAt(0) - 'a';
-		int index = 0;
-		for (; index < size; index++) {
-			if (libraryList[libraryIndex].getWordlist().get(index).getContent()
-					.equals(word))
-				break;
+	/* 初始化词库，将读入的单词根据词性存入不同的词库 */
+	public void init(String fileName1, String fileName2) throws Exception {
+		try {
+			// 从xml文件读入单词
+			InputOutputXml io = new InputOutputXml();
+			SingleWord[] allWords = io.inputXml(fileName1, fileName2);
+			int wordsNum = allWords.length;
+			// 根据词性，将单词存入wordList
+			for (int i = 0; i < wordsNum; i++) {
+				SingleWord word = allWords[i];
+				String wordMeaning = word.getChinese();
+				HashSet<String> posSet = getPos(wordMeaning);
+				for (String currentPos : posSet) {
+					int libraryIndex = pos.indexOf(currentPos);
+					wordList[libraryIndex].add(word);
+				}
+			}
+			// 将wordList中的单词存入libraryList
+			for (int i = 0; i < POS_NUM; i++) {
+				int size = wordList[i].size();
+				int lastIndex = -1;
+				for (int j = 0; j < size; j++) {
+					if (isLast(wordList[i].get(j).getStatus(), i)) {
+						lastIndex = j;
+						break;
+					}
+				}
+				libraryList[i] = new WordLibrary(wordList[i], lastIndex, pos.get(i), i);
+			}
+		} catch (FileNotFoundException ex) {
+			JOptionPane
+					.showMessageDialog(null,
+							"You should put the file dictionary.xml with this application.");
+			System.exit(0);
 		}
-		System.out.println(index + " fuzhiyue1");
-		return index;
+	}
+
+	/* 根据中文解释，读取词性 */
+	private HashSet<String> getPos(String wordMeaning) {
+		HashSet<String> posSet = new HashSet<String>();
+		int length = wordMeaning.length();
+		boolean isProperty = false;
+		String currentProperty = "";
+		for (int i = 0; i < length; i++) {
+			if (isAlphabet(wordMeaning.charAt(i)) && wordMeaning.charAt(i) != 'g' && wordMeaning.charAt(i) != 's'
+					&& (i == 0 || i > 0 && !isUpperCaseAlphabet(wordMeaning.charAt(i - 1)))) {
+				currentProperty += wordMeaning.charAt(i);
+				isProperty = true;
+			} else if (isProperty
+					&& (wordMeaning.charAt(i) == '.' || wordMeaning.charAt(i) == ',')) {
+				currentProperty += '.';
+				if (currentProperty.equals("nn."))
+					currentProperty = "n.";
+				else if (currentProperty.equals("ad."))
+					currentProperty = "adv.";
+				posSet.add(currentProperty);
+				isProperty = false;
+				currentProperty = "";
+			} else {
+				isProperty = false;
+				currentProperty = "";
+			}
+		}
+		return posSet;
+	}
+
+	private boolean isUpperCaseAlphabet(char c) {
+		return c >= 'A' && c <= 'Z';
+	}
+
+	private boolean isAlphabet(char c) {
+		return c >= 'a' && c <= 'z';
+	}
+
+	private boolean isLast(int status, int libraryIndex) {
+		byte currentBit = (byte) ((status >>> (11 - libraryIndex)) & 0x1);
+		return currentBit == 1;
+	}
+
+	public int findWordIndex(String word) {
+		System.out.println(word);
+		int libraryIndex = selectedLibrary.getLibraryIndex();
+		int size = selectedLibrary.getLibraryLength();
+		for (int index = 0; index < size; index++) {
+			if (libraryList[libraryIndex].getWordlist().get(index).getEnglish()
+					.equals(word)) {
+				System.out.println(index);
+				return index;
+			}
+		}
+		return -1;
+	}
+
+	public static String[] getPosChinese() {
+		return POS_CHINESE;
+	}
+
+	public static String[] getPosAbbr() {
+		return POS_ABBR;
 	}
 
 	public int getLibrary() {
-		return selectedLibrary.getLibraryName().toCharArray()[0] - 'A';
+		return selectedLibrary.getLibraryIndex();
 	}
 
 	public int getRememberWordNumber() {
@@ -71,6 +157,10 @@ public class BigLibrary {
 
 	public void setCurrentWordNumber(int currentWordNumber) {
 		this.currentWordNumber = currentWordNumber;
+		int selectedLibraryLength = getSelectedLibrary().getLibraryLength();
+		int lastWordNumber = (currentWordNumber - 1 + selectedLibraryLength) % selectedLibraryLength;
+		System.out.println(currentWordNumber + " " + selectedLibraryLength + " " + lastWordNumber);
+		selectedLibrary.setLastWordNumber(lastWordNumber);
 	}
 
 	public WordLibrary[] getLibraryList() {
@@ -81,7 +171,7 @@ public class BigLibrary {
 		this.libraryList = libraryList;
 	}
 
-	public static WordLibrary getSelectedLibrary() {
+	public WordLibrary getSelectedLibrary() {
 		return selectedLibrary;
 	}
 
@@ -113,13 +203,15 @@ public class BigLibrary {
 		this.currentWrongNumber = currentWrongNumber;
 	}
 
-	public int calcCorrectWordNumber(int arg) {
+	public int getSelectedLibraryLength() {
+		return selectedLibrary.getLibraryLength();
+	}
 
+	public int calcCorrectWordNumber(int arg) {
 		if (arg == 0) {
 			int sum = 0;
-			for (WordLibrary wl : libraryList) {
+			for (WordLibrary wl : libraryList)
 				sum += wl.calcCorrectWordNumber();
-			}
 			return sum;
 		} else
 			return selectedLibrary.calcCorrectWordNumber();
@@ -129,9 +221,8 @@ public class BigLibrary {
 	public int calcWrongWordNumber(int arg) {
 		if (arg == 0) {
 			int sum = 0;
-			for (WordLibrary wl : libraryList) {
+			for (WordLibrary wl : libraryList)
 				sum += wl.calcWrongWordNumber();
-			}
 			return sum;
 		} else
 			return selectedLibrary.calcWrongWordNumber();
@@ -139,7 +230,6 @@ public class BigLibrary {
 	}
 
 	public double calcCorrectRate(int arg) {
-
 		if (arg == 0) {
 			double rate = (double) this.calcCorrectWordNumber(0)
 					/ (this.calcCorrectWordNumber(0) + this
@@ -152,33 +242,29 @@ public class BigLibrary {
 	public void selectedLibrary(String libraryname) {
 		for (int i = 0; i < libraryList.length; i++) {
 			WordLibrary wl = libraryList[i];
-			if (wl.getLibraryName().compareTo(libraryname) == 0) {
+			if (wl.getLibraryName().equals(libraryname)) {
+				System.out.println(i + ": " + libraryname);
+				System.out.println(libraryList[i].getLastWordNumber());
 				selectedLibrary = libraryList[i];
 				break;
 			}
 		}
+		currentWordNumber = (selectedLibrary.getLastWordNumber() + 1) % selectedLibrary.getLibraryLength();
 	}
 
 	public String[] matchWordLibrary(String inputWord) {
 		ArrayList<String> list = selectedLibrary.matchWordLibrary(inputWord);
-
-		if (list.size() >= 10) {
-			String[] result = new String[10];
-			for (int i = 0; i < 10; i++)
-				result[i] = list.get(i);
-			return result;
-		} else {
-			String[] result = new String[list.size()];
-			for (int i = 0; i < list.size(); i++)
-				result[i] = list.get(i);
-			return result;
-		}
+		int returnSize = Math.min(list.size(), 10);
+		String[] result = new String[returnSize];
+		for (int i = 0; i < returnSize; i++)
+			result[i] = list.get(i);
+		return result;
 	}
 
 	public int getNumber(String word) {
 		int size = selectedLibrary.getLibraryLength();
 		for (int i = 0; i < size; i++) {
-			if (selectedLibrary.getWordlist().get(i).getContent().equals(word)) {
+			if (selectedLibrary.getWordlist().get(i).getEnglish().equals(word)) {
 				currentWordNumber = i;
 				return i;
 			}
@@ -186,20 +272,25 @@ public class BigLibrary {
 		return 0;
 	}
 
-	public void startNumber(String word) {
+	public int startNumber(String word) {
 		int size = selectedLibrary.getLibraryLength();
 		for (int i = 0; i < size; i++) {
-			if (selectedLibrary.getWordlist().get(i).getContent().equals(word)) {
+			if (selectedLibrary.getWordlist().get(i).getEnglish().equals(word)) {
 				currentWordNumber = i;
-				return;
+				return i;
 			}
 		}
-		currentWordNumber = 0;
+		currentWordNumber = -1;
+		return -1;
 	}
 
 	public int checkWordNumber(int input) {
 		if (input < 1)
 			return 1;
+		int lastWordNumber = selectedLibrary.getLastWordNumber();
+		int selectedLibraryLength = selectedLibrary.getLibraryLength();
+		currentWordNumber = (lastWordNumber + 1) % selectedLibraryLength;
+		
 		int size = selectedLibrary.getLibraryLength();
 		if (currentWordNumber + input <= size) {
 			rememberWordNumber = input;
@@ -211,90 +302,11 @@ public class BigLibrary {
 	}
 
 	public boolean rememberWord(String str) {
-
-		if (selectedLibrary.update(str, currentWordNumber)) {
+		boolean rememberResult = selectedLibrary.update(str, selectedLibrary, currentWordNumber);
+		if (rememberResult)
 			currentCorrectNumber++;
-		} else {
+		else
 			currentWrongNumber++;
-		}
-		return selectedLibrary.update(str, currentWordNumber);
-
-	}
-
-	public void fillWordLibrary() throws IOException {
-		File statisticsFile = new File("statistics.txt");
-		if (!statisticsFile.exists()) {
-			statisticsFile.createNewFile();
-			PrintWriter statisticsWriter = new PrintWriter(statisticsFile);
-			for (int i = 0; i < WORD_NUM; i++)
-				statisticsWriter.println(0);
-			statisticsWriter.close();
-		}
-		File librariesFile = new File("libraries.txt");
-		if (!librariesFile.exists()) {
-			librariesFile.createNewFile();
-			PrintWriter librariesWriter = new PrintWriter(librariesFile);
-			for (int i = 0; i < 26; i++)
-				librariesWriter.println(-1);
-			librariesWriter.close();
-		}
-
-		WordLibrary[] libraryList = new WordLibrary[26];
-
-		Scanner librariesScanner = new Scanner(librariesFile);
-		for (int i = 0; i < 26; i++) {
-			try {
-				int lastWordNumber = librariesScanner.nextInt();
-				ArrayList<SingleWord> words = new ArrayList<SingleWord>();
-				WordLibrary currentLibrary = new WordLibrary(words,
-						lastWordNumber, String.valueOf((char) ('A' + i)));
-				libraryList[i] = currentLibrary;
-			} catch (NoSuchElementException e) {
-				int lastWordNumber = -1;
-				ArrayList<SingleWord> words = new ArrayList<SingleWord>();
-				WordLibrary currentLibrary = new WordLibrary(words,
-						lastWordNumber, String.valueOf((char) ('A' + i)));
-				libraryList[i] = currentLibrary;
-			}
-		}
-		librariesScanner.close();
-
-		Scanner statusScanner = new Scanner(statisticsFile);
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(
-					"dictionary.txt"));
-			String s = "", content = "", chinese = "";
-			while ((s = br.readLine()) != null) {
-				try {
-					content = s.substring(0, s.indexOf(' '));
-					chinese = s.substring(s.lastIndexOf(' ') + 1);
-					int status = statusScanner.nextInt();
-					int libraryNum = (int) (s.charAt(0) - 'a');
-					SingleWord word = new SingleWord(content, chinese, status);
-					ArrayList<SingleWord> wordList = libraryList[libraryNum]
-							.getWordlist();
-					wordList.add(word);
-					libraryList[libraryNum].setWordlist(wordList);
-				} catch (NoSuchElementException e) {
-					int status = 0;
-					int libraryNum = (int) (s.charAt(0) - 'a');
-					SingleWord word = new SingleWord(content, chinese, status);
-					ArrayList<SingleWord> wordList = libraryList[libraryNum]
-							.getWordlist();
-					wordList.add(word);
-					libraryList[libraryNum].setWordlist(wordList);
-				}
-			}
-		} catch (FileNotFoundException ex) {
-			JOptionPane
-					.showMessageDialog(null,
-							"You should put the file dictionary.txt with this application.");
-			System.exit(0);
-		}
-		setLibraryList(libraryList);
-	}
-
-	public void next() {
-		currentWordNumber++;
+		return rememberResult;
 	}
 }

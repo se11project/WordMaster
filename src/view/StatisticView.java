@@ -7,15 +7,12 @@ import view.PieCharts2;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Label;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.math.BigDecimal;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 
 import org.jfree.ui.RefineryUtilities;
 
@@ -23,10 +20,8 @@ import controller.Controller;
 
 import model.BigLibrary;
 
-;
-
 public class StatisticView {
-
+	private static final int POS_NUM = 10;
 	public JFrame frame;
 
 	private JButton g1;
@@ -34,8 +29,6 @@ public class StatisticView {
 	private JButton g3;
 	private JButton b3;
 	private JButton b4;
-	private JRadioButton j1, j2, j3;
-	private TextField text1, text2;
 	private JPanel p4;// 显示三种图表
 
 	private String s1;// 词库
@@ -157,8 +150,8 @@ public class StatisticView {
 
 			public void actionPerformed(ActionEvent e) {
 
-				double[][] x = new double[3][27];
-				for (int j = 0; j < 26; j++) {
+				double[][] x = new double[3][POS_NUM];
+				for (int j = 0; j < POS_NUM; j++) {
 					x[0][j] = rp.getLibraryList()[j].getLibraryLength();
 					x[1][j] = rp.getLibraryList()[j].calcCorrectWordNumber()
 							+ rp.getLibraryList()[j].calcWrongWordNumber();
@@ -213,7 +206,7 @@ public class StatisticView {
 		Label l3 = new Label("正确数量");
 		Label l4 = new Label("错误数量");
 		Label l5 = new Label("正确率");
-		s1 = rp.getSelectedLibrary().getLibraryName();
+		s1 = rp.getSelectedLibrary().getLibraryNameChinese();
 		s2 = "" + rp.getSelectedLibrary().getLibraryLength();
 		s3 = "" + rp.getSelectedLibrary().calcCorrectWordNumber();
 		s4 = "" + rp.getSelectedLibrary().calcWrongWordNumber();

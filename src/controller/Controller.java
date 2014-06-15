@@ -9,33 +9,59 @@ import view.StartView;
 import view.StatisticView;
 
 import model.BigLibrary;
+import model.WordLibrary;
 
 public class Controller {
-	private static final int WORD_NUM = 7989;// 词库总数
-
 	private BigLibrary rp = new BigLibrary(); // 模型：大的词库。储存所有词库的信息和
-	private MainView mainview;// 主界面
-	private StartView startview;// 第二个界面，主要是用于选择相应的模式
-	private SelectStartView selectstartview;//
-	private ReciteView reciteview;
-	private StatisticView statisticView;
 
 	public Controller() {
 		try {
 			fillWordLibrary();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		mainview = new MainView(this);
+		new MainView(this);
 	}
 
 	public BigLibrary getProcess() {
 		return rp;
 	}
 
+	public int findWordIndex(String word) {
+		return rp.findWordIndex(word);
+	}
+
+	public int getLibrary() {
+		return rp.getLibrary();
+	}
+
 	public void selectedLibrary(String firstName) {
 		rp.selectedLibrary(firstName);
+	}
+
+	public WordLibrary getSelectedLibrary() {
+		return rp.getSelectedLibrary();
+	}
+
+	public int getRememberWordNumber() {
+		return rp.getRememberWordNumber();
+	}
+
+	public int getCurrentWordNumber() {
+		return rp.getCurrentWordNumber();
+	}
+
+	public void setCurrentWordNumber(int currentWordNumber) {
+		rp.setCurrentWordNumber(currentWordNumber);
+	}
+
+	public void setCurrentCorrectNumber(int currentWordNumber) {
+		rp.setCurrentCorrectNumber(currentWordNumber);
+	}
+
+	public void setCurrentWrongNumber(int currentWordNumber) {
+		rp.setCurrentWrongNumber(currentWordNumber);
 	}
 
 	public int calcCorrectWordNumber(int arg) {
@@ -54,8 +80,8 @@ public class Controller {
 		return rp.getNumber(word);
 	}
 
-	public void startNumber(String word) {
-		rp.startNumber(word);
+	public int startNumber(String word) {
+		return rp.startNumber(word);
 	}
 
 	public int checkInputNumber(int input) {
@@ -70,38 +96,34 @@ public class Controller {
 		return rp.rememberWord(str);
 	}
 
-	public void fillWordLibrary() throws IOException {
-		rp.fillWordLibrary();
-	}
-
-	public void next() {
-		rp.next();
+	public void fillWordLibrary() throws Exception {
+		rp.init("dictionary.xml", "statistics.xml");
 	}
 
 	public void changeView(int flag) {
 		switch (flag) {
 		case 0:
-			mainview = new MainView(this);
+			new MainView(this);
 			break;
 		case 1:
-			startview = new StartView(this);
+			new StartView(this);
 			break;
 		case 2:
-			selectstartview = new SelectStartView(this);
+			new SelectStartView(this);
 			break;
 		case 3:
-			reciteview = new ReciteView(this);
+			new ReciteView(this);
 			break;
 		case 4:
-			statisticView = new StatisticView(this, 1);
+			new StatisticView(this, 1);
 			break;
 		case 5:
-			statisticView = new StatisticView(this, 0);
+			new StatisticView(this, 0);
 			break;
 		}
 	}
 
 	public static void main(String[] args) throws IOException {
-		Controller controller = new Controller();
+		new Controller();
 	}
 }

@@ -11,23 +11,25 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import controller.Controller;
 
-import model.BigLibrary;
+import model.InputOutputXml;
+import model.SingleWord;
 import model.WordLibrary;
 
 public class SelectStartView {
-
 	public JFrame frame;
 	private JButton b1;
 
@@ -38,26 +40,23 @@ public class SelectStartView {
 	private JRadioButton j3;
 	private JTextField text1;
 	private JTextField text2;
-	private String n;// 输入的单词数量
 	private String s1 = "";
 	private String s2 = "";// 默认单词是什么
 	private String s3 = "";// 本词库第一个单词是什么
 	private DefaultComboBoxModel model;
 	private JComboBox cmb;
+	private JLabel jSelectedWord = new JLabel();
+	private String cmbSelected = "";
 	static JTextField editor = null;
 
-	public static int startNumber;
-	private int manuNumber;
-	private BigLibrary rp;
 	private Controller controller;
 
 	public SelectStartView(Controller controller) {
 		this.controller = controller;
-		this.rp = controller.getProcess();
-		
-		final int CURRENT_NUMBER = (rp.getCurrentWordNumber() + 1) % rp.getSelectedLibrary().getLibraryLength();
-		
-		SelectStartView.this.controller.getProcess().setCurrentWordNumber(0);
+
+		final int CURRENT_NUMBER = SelectStartView.this.controller.getCurrentWordNumber();
+
+		SelectStartView.this.controller.setCurrentWordNumber(0);// 默认选择第一个单词，起始序号为0
 
 		frame = new JFrame("背单词");
 		frame.setSize(500, 500);
@@ -75,7 +74,7 @@ public class SelectStartView {
 		frame.add(p3, BorderLayout.SOUTH);
 
 		p1.setLayout(new GridLayout(2, 2));
-		p2.setLayout(new GridLayout(2, 3));
+		p2.setLayout(new GridLayout(2, 5));
 		p3.setLayout(new GridLayout(1, 3));
 
 		Label l1 = new Label("本词库第一个单词");
@@ -83,7 +82,7 @@ public class SelectStartView {
 		Label l3 = new Label("输入开始单词");
 		Label l4 = new Label("输入单词数量");
 		text1 = new JTextField();
-		text2 = new JTextField("1");// 输入开始单词
+		text2 = new JTextField("1");// 输入背诵单词数量
 
 		j1 = new JRadioButton(s1);
 		j2 = new JRadioButton(s2);
@@ -93,35 +92,35 @@ public class SelectStartView {
 		bg.add(j2);
 		bg.add(j3);
 
-		/* 完善选择起始单词逻辑。 */
+		// 从第一个单词开始
 		j1.addActionListener(new ActionListener() {
-
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				SelectStartView.this.controller.getProcess().setCurrentWordNumber(0);
+				SelectStartView.this.controller.setCurrentWordNumber(0);
 			}
-
 		});
 
+		// 从上次结束单词开始
 		j2.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-
-				SelectStartView.this.controller.getProcess()
-						.setCurrentWordNumber(CURRENT_NUMBER);
+				SelectStartView.this.controller.setCurrentWordNumber(CURRENT_NUMBER);
 			}
 		});
 
+		// 手动输入起始单词
 		j3.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-
-				WordLibrary libraryList = rp.getSelectedLibrary();
-				String selectedWord = libraryList.getWordlist().get(0)
-						.getContent();
-				SelectStartView.this.controller.startNumber(selectedWord);
+				try {
+					cmbSelected = cmb.getSelectedItem().toString();
+				} catch (NullPointerException ex) {
+					WordLibrary libraryList = SelectStartView.this.controller.getSelectedLibrary();
+					cmbSelected = libraryList.getWordlist().get(0).getEnglish();
+				}
+				jSelectedWord.setText(cmbSelected);
+				int startNumber = SelectStartView.this.controller
+						.startNumber(cmbSelected);
+				SelectStartView.this.controller.setCurrentWordNumber(startNumber);
+				frame.validate();
 			}
-
 		});
 
 		j1.setSelected(true);
@@ -135,45 +134,6 @@ public class SelectStartView {
 		p2.add(text1);
 		model = new DefaultComboBoxModel();
 		cmb = new JComboBox(model);
-
-		text1.addMouseListener(new MouseListener() {
-
-			public void mouseReleased(MouseEvent e) {
-				j3.setSelected(true);
-				String str = text1.getText();
-				System.out.println(str);// 输入的字母，后台处理
-				cmb.removeAllItems();
-
-				String[] matchedWords = SelectStartView.this.controller
-						.matchInputString(str);
-				for (int i = 0; i < matchedWords.length; i++) {
-					model.addElement(matchedWords[i]);
-					cmb.addItem(matchedWords[i]);
-				}
-
-			}
-
-			@Override
-			public void mouseClicked(MouseEvent e) {
-
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-
-			}
-
-		});
 
 		text1.addKeyListener(new KeyListener() {
 
@@ -205,27 +165,35 @@ public class SelectStartView {
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
+				if (j3.isSelected()) {// 如果手动输入起始单词，更新当前单词序号
+					String selectedWord = "";
+					try {
+						cmbSelected = cmb.getSelectedItem().toString();
+					} catch (NullPointerException ex) {
+						WordLibrary libraryList = SelectStartView.this.controller.getSelectedLibrary();
+						cmbSelected = libraryList.getWordlist().get(0)
+								.getEnglish();
+					}
+					jSelectedWord.setText(cmbSelected);
+					int startNumber = SelectStartView.this.controller
+							.startNumber(cmbSelected);
+					SelectStartView.this.controller.getProcess()
+							.setCurrentWordNumber(startNumber);
+					frame.validate();
 
-				String selectedWord = "unselected";
-				try {
-					selectedWord = cmb.getSelectedItem().toString();
-				} catch (NullPointerException ex) {
-					WordLibrary libraryList = rp.getSelectedLibrary();
-					selectedWord = libraryList.getWordlist().get(0)
-							.getContent();
+					System.out.println(selectedWord + " 345");
+
+					String str = text1.getText();
+					System.out.println(str);
+					cmb.removeAllItems();
+
+					String[] matchedWords = SelectStartView.this.controller
+							.matchInputString(str);
+					for (int i = 0; i < matchedWords.length; i++) {
+						cmb.addItem(matchedWords[i]);
+					}
+					cmb.setSelectedItem(selectedWord);
 				}
-				System.out.println(selectedWord + " 345");
-
-				String str = text1.getText();
-				System.out.println(str);
-				cmb.removeAllItems();
-
-				String[] matchedWords = SelectStartView.this.controller
-						.matchInputString(str);
-				for (int i = 0; i < matchedWords.length; i++) {
-					cmb.addItem(matchedWords[i]);
-				}
-				cmb.setSelectedItem(selectedWord);
 			}
 
 			@Override
@@ -247,29 +215,28 @@ public class SelectStartView {
 			public void mouseExited(MouseEvent e) {
 
 			}
-
 		});
 
-		/* 修改输入背单词数量判定，输入非数字字符直接删除，获得键盘代码应为getKeyCode方法。 */
 		text2.addKeyListener(new KeyListener() {
 			String currentText = text2.getText();
+
 			public void keyReleased(KeyEvent e) {
-				int keyChar = e.getKeyCode();
-				if (keyChar >= KeyEvent.VK_0 && keyChar <= KeyEvent.VK_9
-						|| keyChar == KeyEvent.VK_BACK_SPACE
-						|| keyChar == KeyEvent.VK_DELETE
-						|| keyChar == KeyEvent.VK_LEFT
-						|| keyChar == KeyEvent.VK_RIGHT) {
-					if (text2.getText().equals(""))
+				int keyCode = e.getKeyCode();
+				if (keyCode >= KeyEvent.VK_0 && keyCode <= KeyEvent.VK_9
+						|| keyCode == KeyEvent.VK_BACK_SPACE
+						|| keyCode == KeyEvent.VK_DELETE
+						|| keyCode == KeyEvent.VK_LEFT
+						|| keyCode == KeyEvent.VK_RIGHT) {
+					if (text2.getText().equals("")
+							|| Integer.parseInt(text2.getText()) == 0)
 						text2.setText("1");
 					int input = Integer.parseInt(text2.getText());
 					int max = SelectStartView.this.controller
 							.checkInputNumber(input);
 					if (max < input)
 						text2.setText(String.valueOf(max));
-				} else {
+				} else
 					text2.setText(currentText);
-				}
 			}
 
 			@Override
@@ -288,13 +255,14 @@ public class SelectStartView {
 
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				String s = e.getItem().toString();
-				SelectStartView.this.controller.startNumber(s);
+				cmbSelected = e.getItem().toString();
+				SelectStartView.this.controller.startNumber(cmbSelected);
 			}
 
 		});
 
 		p2.add(cmb);
+		p2.add(jSelectedWord);
 		p2.add(j3);
 
 		p2.add(l4);
@@ -308,11 +276,25 @@ public class SelectStartView {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				WordLibrary selectedLibrary = SelectStartView.this.controller.getSelectedLibrary();
+				int libraryIndex = selectedLibrary.getLibraryIndex();
+				ArrayList<SingleWord> wordlist = selectedLibrary.getWordlist();
+				for (SingleWord word : wordlist) {
+					int status = word.getStatus();
+					status &= ~(1 << (11 - libraryIndex));
+					word.setStatus(status);
+				}
+				selectedLibrary.setWordlist(wordlist);
+				InputOutputXml.outputXml(wordlist, "statistics.xml");
 
+				int input = Integer.parseInt(text2.getText());
+				int max = SelectStartView.this.controller
+						.checkInputNumber(input);
+				if (max < input)
+					text2.setText(String.valueOf(max));
 				SelectStartView.this.controller.changeView(3);
 				frame.dispose();
 			}
-
 		});
 
 		b3.addActionListener(new ActionListener() {
@@ -336,8 +318,10 @@ public class SelectStartView {
 		p3.add(b3);
 		p3.add(b4);
 		String x = "";
-		Label l5 = new Label(x);
+		JLabel l5 = new JLabel(x);
 		p2.add(l5);
+		JLabel l6 = new JLabel(x);
+		p2.add(l6);
 
 		frame.validate();
 	}

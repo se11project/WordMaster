@@ -9,8 +9,6 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import model.BigLibrary;
-
 import controller.Controller;
 
 public class StartView {
@@ -22,12 +20,12 @@ public class StartView {
 	private JButton exitButton;
 
 	private Controller controller;
-	private BigLibrary remberProcess;
+//	private BigLibrary remberProcess;
 
 	public StartView(Controller controller) {
 
 		this.controller = controller;
-		this.remberProcess = controller.getProcess();
+//		this.remberProcess = controller.getProcess();
 
 		frame = new JFrame("±³µ¥´Ê");
 		frame.setSize(500, 500);
@@ -55,12 +53,10 @@ public class StartView {
 		});
 
 		reciteButton.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
 				StartView.this.controller.changeView(2);
 				frame.dispose();
 			}
-
 		});
 
 		backToMainButton.addActionListener(new ActionListener() {
