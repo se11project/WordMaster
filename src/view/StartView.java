@@ -20,12 +20,9 @@ public class StartView {
 	private JButton exitButton;
 
 	private Controller controller;
-//	private BigLibrary remberProcess;
 
 	public StartView(Controller controller) {
-
 		this.controller = controller;
-//		this.remberProcess = controller.getProcess();
 
 		frame = new JFrame("±³µ¥´Ê");
 		frame.setSize(500, 500);

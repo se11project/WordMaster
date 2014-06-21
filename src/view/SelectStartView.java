@@ -136,19 +136,15 @@ public class SelectStartView {
 		cmb = new JComboBox(model);
 
 		text1.addKeyListener(new KeyListener() {
-
 			@Override
 			public void keyReleased(KeyEvent e) {
-
 				j3.setSelected(true);
 				String str = text1.getText();
-				System.out.println(str);// 输入的字母，后台处理
 				model.removeAllElements();
 				String[] matchedWords = SelectStartView.this.controller
 						.matchInputString(str);
 				for (int i = 0; i < matchedWords.length; i++)
 					model.addElement(matchedWords[i]);
-
 			}
 
 			@Override
@@ -162,7 +158,6 @@ public class SelectStartView {
 		});
 
 		text2.addMouseListener(new MouseListener() {
-
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (j3.isSelected()) {// 如果手动输入起始单词，更新当前单词序号
@@ -181,10 +176,7 @@ public class SelectStartView {
 							.setCurrentWordNumber(startNumber);
 					frame.validate();
 
-					System.out.println(selectedWord + " 345");
-
 					String str = text1.getText();
-					System.out.println(str);
 					cmb.removeAllItems();
 
 					String[] matchedWords = SelectStartView.this.controller
@@ -198,28 +190,24 @@ public class SelectStartView {
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
-
 			}
 
 			@Override
 			public void mousePressed(MouseEvent e) {
-
 			}
 
 			@Override
 			public void mouseEntered(MouseEvent e) {
-
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-
 			}
 		});
 
 		text2.addKeyListener(new KeyListener() {
 			String currentText = text2.getText();
-
+			@Override
 			public void keyReleased(KeyEvent e) {
 				int keyCode = e.getKeyCode();
 				if (keyCode >= KeyEvent.VK_0 && keyCode <= KeyEvent.VK_9

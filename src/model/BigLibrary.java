@@ -76,7 +76,7 @@ public class BigLibrary {
 	}
 
 	/* 根据中文解释，读取词性 */
-	private HashSet<String> getPos(String wordMeaning) {
+	HashSet<String> getPos(String wordMeaning) {
 		HashSet<String> posSet = new HashSet<String>();
 		int length = wordMeaning.length();
 		boolean isProperty = false;
@@ -118,16 +118,12 @@ public class BigLibrary {
 	}
 
 	public int findWordIndex(String word) {
-		System.out.println(word);
 		int libraryIndex = selectedLibrary.getLibraryIndex();
 		int size = selectedLibrary.getLibraryLength();
-		for (int index = 0; index < size; index++) {
+		for (int index = 0; index < size; index++)
 			if (libraryList[libraryIndex].getWordlist().get(index).getEnglish()
-					.equals(word)) {
-				System.out.println(index);
+					.equals(word))
 				return index;
-			}
-		}
 		return -1;
 	}
 
@@ -159,7 +155,6 @@ public class BigLibrary {
 		this.currentWordNumber = currentWordNumber;
 		int selectedLibraryLength = getSelectedLibrary().getLibraryLength();
 		int lastWordNumber = (currentWordNumber - 1 + selectedLibraryLength) % selectedLibraryLength;
-		System.out.println(currentWordNumber + " " + selectedLibraryLength + " " + lastWordNumber);
 		selectedLibrary.setLastWordNumber(lastWordNumber);
 	}
 
@@ -243,8 +238,6 @@ public class BigLibrary {
 		for (int i = 0; i < libraryList.length; i++) {
 			WordLibrary wl = libraryList[i];
 			if (wl.getLibraryName().equals(libraryname)) {
-				System.out.println(i + ": " + libraryname);
-				System.out.println(libraryList[i].getLastWordNumber());
 				selectedLibrary = libraryList[i];
 				break;
 			}

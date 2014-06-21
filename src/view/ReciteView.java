@@ -95,12 +95,8 @@ public class ReciteView extends JFrame {
 		l4 = new Label(s4);
 		b1 = new JButton("确认");
 		currentNum = startNum;
-//		current_lib = ReciteView.this.controller.getLibrary();
-
-		System.out.println("str3 " + flag_b1);
 
 		b1.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (!ReciteView.flag_b1) {
@@ -119,19 +115,14 @@ public class ReciteView extends JFrame {
 					// 判断所背单词是否正确，更新数据结构中该单词的状态，包括为本词库最后一个单词以及背对/背过
 					if (ReciteView.this.controller.rememberWord(test.getText())) {
 						l4.setText("恭喜你！回答正确。");
-
-						System.out.println("str2 " + flag_b1);
-						
 						currentStatus |= (1 << (11 - selectedLibraryIndex));
 						currentStatus |= 0x3;
 						ReciteView.this.controller.getSelectedLibrary().getWordlist()
 								.get(currentNum).setStatus(currentStatus);
 					} else {
 						l4.setText("很遗憾！你答错了。正确答案：" + currentWord.getEnglish());
-
 						if (!ReciteView.flag_b1) {
 							ReciteView.flag_b1 = true;
-
 							currentStatus |= (1 << (11 - selectedLibraryIndex));
 							currentStatus |= 0x1;
 							ReciteView.this.controller.getSelectedLibrary().getWordlist()

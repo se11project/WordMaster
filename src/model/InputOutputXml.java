@@ -43,7 +43,6 @@ public class InputOutputXml {
 		Element root1 = document1.getDocumentElement();
 		NodeList words1 = root1.getElementsByTagName("word");
 
-		System.out.println(words1.getLength());
 		boolean hasStatus = false;
 		for (int i = 0; i < words1.getLength(); i++) {
 			SingleWord singleWord;
@@ -66,7 +65,7 @@ public class InputOutputXml {
 				chinese = "";
 			else {
 				Node chineseNode = chineseElement.getFirstChild();
-				chinese = chineseNode.getNodeValue() + " ";
+				chinese = chineseNode.getNodeValue();
 			}
 
 			singleWord = new SingleWord(english, chinese, 0);
@@ -77,7 +76,7 @@ public class InputOutputXml {
 
 		if (!file2.exists()) {// 如果statistics.xml文件不存在，则初始化该文件，status全部是0
 			file2.createNewFile();
-			writeXmlFile(allWords, "statistics.xml");
+			writeXmlFile(allWords, fileName2);
 		} else {
 			DocumentBuilderFactory dbf2 = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder2 = dbf2.newDocumentBuilder();
@@ -107,14 +106,12 @@ public class InputOutputXml {
 		}
 
 		// 如果xml文件中没有status，则重新写入xml，加上status属性
-		if (!hasStatus) {
-			System.out.println("No status");
-			writeXmlFile(allWords, "statistics.xml");
-		}
+		if (!hasStatus)
+			writeXmlFile(allWords, fileName2);
 		return allWords;
 	}
 
-	public void callWriteXmlFile(Document doc, Writer w, String encoding) {
+	private void callWriteXmlFile(Document doc, Writer w, String encoding) {
 		try {
 			Source source = new DOMSource(doc);
 
@@ -233,7 +230,7 @@ public class InputOutputXml {
 		}
 	}
 
-	public static boolean saveXML(Document document, String filePath) {
+	private static boolean saveXML(Document document, String filePath) {
 		try {
 			TransformerFactory tFactory = TransformerFactory.newInstance();
 			Transformer transformer = tFactory.newTransformer();
@@ -244,7 +241,6 @@ public class InputOutputXml {
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println(e.getMessage());
 			return false;
 		}
 	}
